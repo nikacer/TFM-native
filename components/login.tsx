@@ -6,10 +6,13 @@ import {
 } from "native-base";
 import { useState } from "react";
 import { SafeAreaView } from "react-native";
-import { login } from "../services/security";
+import { login, validateAccess } from "../services/security";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+
 
 const Login = ({ navigation, route }:any) => {
   const [form, setForm] = useState({} as {email:string, password:string})
+  const [error, setError]= useState()
 
   const changeDataForm = (value: any, key: string) => {
       setForm((current) => ({ ...current, [key]: value }));
@@ -17,8 +20,18 @@ const Login = ({ navigation, route }:any) => {
   }
 
   const loginPOST = async ()=>{
-    const {data} = await login(form)
-    console.log(data);
+    try {
+      const { data } = await login(form);
+      await AsyncStorage.setItem("user", JSON.stringify(data.payload));
+      await AsyncStorage.setItem("jwtToken", data.jwtToken);
+
+      console.log(await validateAccess());
+      
+    } catch (error:any) {
+      console.error(error);
+      
+      setError(error)
+    }
     
   }
   return (
@@ -32,7 +45,7 @@ const Login = ({ navigation, route }:any) => {
             maxWidth="300px"
             size="2xl"
             margin={1}
-            onChangeText={(evt) => changeDataForm(evt, "email")}
+            onChangeText={(evt) => changeDataForm(evt.toLowerCase(), "email")}
           />
           <Input
             mx="3"
