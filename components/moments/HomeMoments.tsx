@@ -73,13 +73,16 @@ const HomeMoments = () => {
 
   return (
     <>
-      <Modal isOpen={addMoment} onClose={setAddMoment} size="md">
-        <Modal.Content maxH="212">
+      <Modal isOpen={addMoment} onClose={setAddMoment} size="lg">
+        <Modal.Content>
           <Modal.CloseButton />
           <Modal.Header>Agregar un momento</Modal.Header>
           <Modal.Body>
-            <ScrollView>
+              <Text marginBottom={5}>Agrega este momento, recurda que el nombre que le ingreses será
+                  el que todos los usuarios vean
+              </Text>
               <Input
+              marginBottom={5}
                 placeholder="Nombre del momento"
                 onChangeText={(text) =>
                   setNewMoment((currentmoment) => ({
@@ -90,6 +93,7 @@ const HomeMoments = () => {
               />
               <Select
                 accessibilityLabel="Seleccione Actividad"
+                placeholder="Seleccione Actividad"
                 onValueChange={(text) =>
                   setNewMoment((currentmoment) => ({
                     ...currentmoment,
@@ -105,7 +109,6 @@ const HomeMoments = () => {
                   />
                 ))}
               </Select>
-            </ScrollView>
           </Modal.Body>
           <Modal.Footer>
             <Button.Group space={2}>
@@ -168,7 +171,7 @@ const styles = StyleSheet.create({
   },
   map: {
     width: Dimensions.get("screen").width - 20,
-    height: Dimensions.get("screen").height - 300,
+    height: Dimensions.get("screen").height - 150,
   },
 });
 
