@@ -30,7 +30,10 @@
     "expo-calendar": "~10.2.0",
     "expo-localization": "~13.0.0",
     "expo-secure-store": "~11.2.0",
-    "@react-native-async-storage/async-storage": "~1.17.3"
+    "@react-native-async-storage/async-storage": "~1.17.3",
+    "expo-splash-screen": "~0.15.1",
+    "react-native-maps": "0.30.2",
+    "expo-location": "~14.2.2"
   },
   "devDependencies": {
     "@babel/core": "^7.12.9",

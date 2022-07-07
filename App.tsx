@@ -1,14 +1,16 @@
-import Login from "./components/login";
+import Login from "./components/security/login";
+import * as SplashScreen from "expo-splash-screen";
 
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
-import { NativeBaseProvider } from "native-base";
-import React from "react";
+import { Box, NativeBaseProvider } from "native-base";
+import React, { useCallback, useEffect, useState } from "react";
 
 // components
-import Register from "./components/register";
+import Register from "./components/security/register";
 import Menu from "./components/menu";
-import Verify from "./components/verify";
+import Verify from "./components/security/verify";
+import Home from "./components/generals/Home";
 
 const routes = [
   {
@@ -23,28 +25,38 @@ const routes = [
   },
   {
     component: Verify,
-    name: "verify",
+    name: "Verify",
     options: { title: "verificar Correo" },
+  },
+  {
+    component: Home,
+    name: "Home",
+    options: { title: "Tablero" },
   },
 ];
 
 const Stack = createNativeStackNavigator();
 
+
+
+
 export default function App() {
   return (
     <NavigationContainer>
       <NativeBaseProvider>
-        <Stack.Navigator>
-          <Stack.Group
-            screenOptions={({ navigation }) => ({
-              headerLeft: () => <Menu />,
-            })}
-          >
-            {routes.map((route) => (
-              <Stack.Screen {...route} />
-            ))}
-          </Stack.Group>
-        </Stack.Navigator>
+        <Box paddingTop={15} flex={1}>
+          <Stack.Navigator>
+            <Stack.Group
+              screenOptions={({ navigation }) => ({
+                headerLeft: () => <Menu />,
+              })}
+            >
+              {routes.map((route) => (
+                <Stack.Screen {...route} />
+              ))}
+            </Stack.Group>
+          </Stack.Navigator>
+        </Box>
       </NativeBaseProvider>
     </NavigationContainer>
   );

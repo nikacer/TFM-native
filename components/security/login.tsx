@@ -2,12 +2,12 @@ import {
   Input,
   Box,
   Button,
-  Text
+  Text,
 } from "native-base";
-import { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { SafeAreaView } from "react-native";
-import { login, validateAccess } from "../services/security";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import { login, createAccess, validateAccess } from "../../services/security";
+import { AlertComponent } from "../common/AlertComponent";
 
 
 const Login = ({ navigation, route }:any) => {
@@ -18,24 +18,22 @@ const Login = ({ navigation, route }:any) => {
       setForm((current) => ({ ...current, [key]: value }));
       
   }
+  
 
   const loginPOST = async ()=>{
     try {
       const { data } = await login(form);
-      await AsyncStorage.setItem("user", JSON.stringify(data.payload));
-      await AsyncStorage.setItem("jwtToken", data.jwtToken);
-
-      console.log(await validateAccess());
-      
+      const response = await createAccess(data)  
+      navigation.navigate("Home") 
     } catch (error:any) {
       console.error(error);
-      
       setError(error)
     }
     
   }
   return (
     <>
+      {route?.params?.message && <AlertComponent {...route.params.message} />}
       <Box alignItems="center" alignContent="center">
         <SafeAreaView>
           <Input
@@ -70,6 +68,7 @@ const Login = ({ navigation, route }:any) => {
             mx="3"
             margin={3}
             onPress={loginPOST}
+            variant="subtle"
           >
             Acceder
           </Button>

@@ -2,6 +2,7 @@ import { Input, Box, Button, Text, FormControl, Select, CheckIcon } from "native
 import { SafeAreaView } from "react-native";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { useState } from "react";
+import {register } from '../../services/security'
 
 const form: Array<{
   type: "password" | "text" | "email" | "list" | "date";
@@ -31,14 +32,14 @@ const form: Array<{
     isRequired: true,
   },
   {
-    name: "birthday",
+    name: "birthDate",
     isRequired: true,
     placeholder: "AAAA/MM/DD",
     type: "text",
     label: "Fecha Nacieminto",
   },
   {
-    name: "gener",
+    name: "gender",
     isRequired: true,
     type: "list",
     label: "Género",
@@ -51,32 +52,51 @@ const form: Array<{
     name: "password",
     isRequired: true,
     placeholder: "coloque su contraseña",
-    type: "text",
+    type: "password",
     label: "Contraseña",
   },
 ];
 
 const Register = ({ navigation }: any) => {
 
+    const [data,setData] = useState({})
+
+    const sendData =async  ()=> {
+       try {
+           console.log(data);
+           
+            await register(data);
+            navigation.navigate("Verify", { data });
+       } catch (error) {
+           console.error(error);     
+       }
+    }
+
   return (
     <>
       <Box alignItems="center" alignContent="center">
         <SafeAreaView>
-          {form.map(({ type, name, placeholder, list, label, isRequired }, index) => {
+          {form.map(
+            ({ type, name, placeholder, list, label, isRequired }, index) => {
               let returnValue;
-            if (type !== "list") {
-              returnValue= <Input
-                type={type as "text" | "password"}
-                name={name}
-                placeholder={placeholder}
-                mx="3"
-                w="75%"
-                maxWidth="300px"
-                size="2xl"
-                margin={1}
-                key={index}
-              />;
-            }else if(type==="list"){
+              if (type !== "list") {
+                returnValue = (
+                  <Input
+                    type={type as "text" | "password"}
+                    name={name}
+                    placeholder={placeholder}
+                    mx="3"
+                    w="75%"
+                    maxWidth="300px"
+                    size="2xl"
+                    margin={1}
+                    key={index}
+                    onChangeText={(value) =>
+                      setData((current) => ({ ...current, [name]: value }))
+                    }
+                  />
+                );
+              } else if (type === "list") {
                 returnValue = (
                   <Select
                     accessibilityLabel="Seleccione Género"
@@ -90,23 +110,25 @@ const Register = ({ navigation }: any) => {
                     paddingBottom={3}
                     paddingTop={3}
                     key={index}
+                    onValueChange={(value) =>
+                      setData((current) => ({ ...current, [name]: value }))
+                    }
                   >
                     {list?.map((item, index) => (
                       <Select.Item {...item} key={index} />
                     ))}
                   </Select>
                 );
+              }
 
-
+              return (
+                <FormControl isRequired={isRequired}>
+                  <FormControl.Label>{label}</FormControl.Label>
+                  {returnValue}
+                </FormControl>
+              );
             }
-
-            return (
-              <FormControl isRequired={isRequired} >
-                <FormControl.Label>{label}</FormControl.Label>
-                {returnValue}
-              </FormControl>
-            );
-          })}
+          )}
 
           <Text
             mx={3}
@@ -115,12 +137,7 @@ const Register = ({ navigation }: any) => {
           >
             Ya tienes una cuenta?
           </Text>
-          <Button
-            onPress={() => console.log("hello world")}
-            maxWidth="300px"
-            mx="3"
-            margin={3}
-          >
+          <Button onPress={sendData} maxWidth="300px" mx="3" margin={3}>
             Registrarse
           </Button>
         </SafeAreaView>
