@@ -1,44 +1,52 @@
-import { Text, ScrollView, Flex, Box, Center} from 'native-base'
-import React, { useState } from 'react'
+import {
+  Text,
+  ScrollView,
+  Flex,
+  Box,
+  Center,
+  View,
+  Button,
+  Row,
+  Column,
+} from "native-base";
+import React, { useState } from "react";
 
-import HomeMoments from '../moments/HomeMoments'
-import HomePets from '../pets/home'
+import HomeMoments from "../moments/HomeMoments";
+import HomePets from "../pets/home";
 
 const Home = () => {
-    const [tab,setTab] = useState(0)
-    const tabs = [
-      {
-        Component: HomeMoments,
-        label: "Bucar Momentos",
-      },
-      {
-        Component: HomePets,
-        label: "Mis Mascotas",
-      },
-    ];
-    return (
-      <ScrollView>
-        <Flex direction="row" mb="2.5" mt="1.5">
-          {tabs.map(({ Component, label }, index) => (
-            <Box flex={1 / 2} key={index}>
-              <Box flex={1} flexDirection="column">
-                <Text textAlign="center" onPress={()=>setTab(index)}>
-                  {label}
-                </Text>
-                {tab === index ? (
-                  <Box marginTop={15} mx={3}>
-                    <Component />
-                  </Box>
-                ) : (
-                  <></>
-                )}
-              </Box>
-            </Box>
-          ))}
-        </Flex>
-        <Center></Center>
-      </ScrollView>
-    );
-}
+  const [tab, setTab] = useState(0);
+  const tabs = [
+    {
+      Component: HomeMoments,
+      label: "Bucar Momentos",
+    },
+    {
+      Component: HomePets,
+      label: "Mis Mascotas",
+    },
+  ];
+  return (
+    <>
+      <View >
+        {tabs.map(({ Component, label }, index) => (
+          <Button
+            key={index}
+            borderRadius={0}
+            width="50%"
+            height={20}
+            position="absolute"
+            left={index * 50 + '%'}
+            backgroundColor={index === tab ? "coolGray.700" : "cyan.700"}
+            onPress={() => setTab(index)}
+          >
+            {label}
+          </Button>
+        ))}
+      </View>
+      <View position="absolute" top="20">{tab === 0 ? <HomeMoments /> : <HomePets />}</View>
+    </>
+  );
+};
 
-export default Home
+export default Home;

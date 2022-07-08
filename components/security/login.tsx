@@ -3,6 +3,7 @@ import {
   Box,
   Button,
   Text,
+  Center
 } from "native-base";
 import React, { useEffect, useState } from "react";
 import { SafeAreaView } from "react-native";
@@ -13,6 +14,7 @@ import { AlertComponent } from "../common/AlertComponent";
 const Login = ({ navigation, route }:any) => {
   const [form, setForm] = useState({} as {email:string, password:string})
   const [error, setError]= useState()
+  const [loading,setLoading] = useState(false)
 
   const changeDataForm = (value: any, key: string) => {
       setForm((current) => ({ ...current, [key]: value }));
@@ -22,19 +24,22 @@ const Login = ({ navigation, route }:any) => {
 
   const loginPOST = async ()=>{
     try {
+      setLoading(true);
       const { data } = await login(form);
       const response = await createAccess(data)  
       navigation.navigate("Home") 
     } catch (error:any) {
       console.error(error);
       setError(error)
+    }finally{
+      setLoading(false)
     }
     
   }
   return (
     <>
       {route?.params?.message && <AlertComponent {...route.params.message} />}
-      <Box alignItems="center" alignContent="center">
+      <Box alignItems="center" alignContent="center" mt={100}>
         <SafeAreaView>
           <Input
             mx="3"
@@ -69,6 +74,7 @@ const Login = ({ navigation, route }:any) => {
             margin={3}
             onPress={loginPOST}
             variant="subtle"
+            isLoading={loading}
           >
             Acceder
           </Button>

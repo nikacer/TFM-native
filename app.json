@@ -1,7 +1,8 @@
 {
   "expo": {
-    "name": "petsTwo",
-    "slug": "petsTwo",
+    "name": "per our buddies",
+    "slug": "per-our-buddies",
+    "owner": "nikacer",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -28,6 +29,7 @@
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    }
+    },
+    "description": ""
   }
 }

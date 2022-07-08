@@ -48,11 +48,11 @@ export default function App() {
           <Stack.Navigator>
             <Stack.Group
               screenOptions={({ navigation }) => ({
-                headerLeft: () => <Menu />,
+                headerLeft: () => <Menu navigation={navigation} />,
               })}
             >
-              {routes.map((route) => (
-                <Stack.Screen {...route} />
+              {routes.map((route, index) => (
+                <Stack.Screen {...route} key={index}/>
               ))}
             </Stack.Group>
           </Stack.Navigator>
