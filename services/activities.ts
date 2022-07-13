@@ -4,8 +4,6 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 const basePath = "https://hyhjn44h7b.execute-api.us-east-2.amazonaws.com/dev";
 
 const list = async (): Promise<IActivities[]> => {
-  let activitiesStorage = await AsyncStorage.getItem("activities");
-  if (activitiesStorage) return JSON.parse(activitiesStorage);
   const {
     data: { data: {Items} },
   } = await axios.get(`${basePath}/activities/list`);

@@ -12,7 +12,7 @@ import {
 import React, { useState } from "react";
 
 import HomeMoments from "../moments/HomeMoments";
-import HomePets from "../pets/home";
+import HomePets from "../pets/homePets";
 
 const Home = () => {
   const [tab, setTab] = useState(0);

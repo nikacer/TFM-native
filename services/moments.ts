@@ -24,7 +24,14 @@ const listMoment = async () => {
     }
 };
 
-export { addMoment as addMomentRest,listMoment, IMoment };
+const commentMomentRest = async (id:string,comment:any)=>{
+    const dataUser = await validateAccess();
+    return await  axios.post(`${basePath}/comment/${id}`, comment, {
+      headers: { Authorization: `Bearer ${dataUser.token}` },
+    });
+}
+
+export { addMoment as addMomentRest, listMoment, IMoment, commentMomentRest };
 
 interface IMoment {
   name: string;

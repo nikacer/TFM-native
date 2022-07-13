@@ -1,11 +1,25 @@
-import React, { useCallback, useEffect, useState } from "react";
-import { Dimensions, Linking, Platform, StyleSheet, View } from "react-native";
-import MapView, { AnimatedRegion, Callout, Marker } from "react-native-maps";
+import React, { useCallback, useEffect, useRef, useState } from "react";
+import {
+  Dimensions,
+  Linking,
+  Platform,
+  StyleSheet,
+  TouchableOpacity,
+} from "react-native";
+import MapView, {
+  AnimatedRegion,
+  Callout,
+  Marker,
+  CalloutSubview,
+} from "react-native-maps";
 import * as Location from "expo-location";
 import { LocationObject, LocationObjectCoords } from "expo-location";
 import { AlertComponent } from "../common/AlertComponent";
 import {
+  Alert,
   Button,
+  FlatList,
+  FormControl,
   Input,
   Modal,
   Radio,
@@ -13,9 +27,16 @@ import {
   Select,
   Text,
   TextArea,
+  View,
 } from "native-base";
 import { activitiesList, IActivities } from "../../services/activities";
-import { addMomentRest, IMoment, listMoment } from "../../services/moments";
+import {
+  addMomentRest,
+  commentMomentRest,
+  IMoment,
+  listMoment,
+} from "../../services/moments";
+import { background } from "native-base/lib/typescript/theme/styled-system";
 
 const HomeMoments = () => {
   const [location, setLocation] = useState<ILocation>();
@@ -25,15 +46,17 @@ const HomeMoments = () => {
   const [commnetMoment, setCommentMoment] = useState(false);
   const [activities, setActivities] = useState<Array<IActivities>>([]);
   const [newMoment, setNewMoment] = useState<IMoment | {}>({});
+  const [newComment, setNewComment] = useState<any>({});
   const [markers, setMarkers] = useState([]);
+  const [markerSelected, setMarkerSelected] = useState<any>(null);
 
   const transformLocation = () =>
     location
       ? {
-          latitude: location.coords.latitude,
-          longitude: location.coords.longitude,
-          latitudeDelta: location.coords.latitudeDelta,
-          longitudeDelta: location.coords.longitudeDelta,
+          latitude: Number(location.coords.latitude),
+          longitude: Number(location.coords.longitude),
+          latitudeDelta: Number(location.coords.latitudeDelta),
+          longitudeDelta: Number(location.coords.longitudeDelta),
         }
       : undefined;
 
@@ -44,14 +67,12 @@ const HomeMoments = () => {
       return;
     }
 
-    Location.watchPositionAsync(
+    const positionSubscription = await Location.watchPositionAsync(
       {
         distanceInterval: 10,
         accuracy: Location.Accuracy.High,
       },
       (currentLocation) => {
-        console.log(location);
-
         setLocation({
           ...currentLocation,
           coords: {
@@ -62,17 +83,23 @@ const HomeMoments = () => {
         });
       }
     );
+
+    return () => {
+      positionSubscription.remove();
+    };
   }, []);
 
   const obtainActivities = useCallback(async () => {
-    const activities = await activitiesList();
-    console.log(activities);
-
-    // setActivities(activities);
+    if (!activities.length) {
+      const activitiesResponse: any = await activitiesList();
+      setActivities(activitiesResponse);
+    }
   }, []);
 
   const momentList = useCallback(async () => {
     const responseMoment = await listMoment();
+    console.log(responseMoment);
+    
     setMarkers(responseMoment ? responseMoment : []);
   }, []);
 
@@ -95,15 +122,10 @@ const HomeMoments = () => {
     setAddMoment(true);
   };
 
-  const saveMoment = async () => {
-    await addMomentRest(newMoment);
-    momentList();
-  };
-
   const openMap = ({ latitude, longitude, label }: any) => {
     const scheme = Platform.select({
-      ios: "maps:0,0?q=",
-      android: "waze:0,0?q=",
+      ios: "maps:?q=",
+      android: "geo:?q=",
     });
     const latLng = `${latitude},${longitude}`;
 
@@ -115,216 +137,128 @@ const HomeMoments = () => {
     if (url) Linking.openURL(url);
   };
 
-  // const ASPECT_RATIO = width / height;
-  // const LONGITUDE_DELTA = LATITUDE_DELTA * ASPECT_RATIO;
-
-  const ModalAddMoment = () => (
-    <Modal isOpen={addMoment} onClose={setAddMoment} size="lg">
-      <Modal.Content>
-        <Modal.CloseButton />
-        <Modal.Header>Agregar un momento</Modal.Header>
-        <Modal.Body>
-          <Text marginBottom={5}>
-            Agrega este momento, recurda que el nombre que le ingreses será el
-            que todos los usuarios vean
-          </Text>
-          <Input
-            marginBottom={5}
-            placeholder="Nombre del momento"
-            onChangeText={(text) =>
-              setNewMoment((currentmoment) => ({
-                ...currentmoment,
-                name: text,
-              }))
-            }
-          />
-          <Select
-            accessibilityLabel="Seleccione Actividad"
-            placeholder="Seleccione Actividad"
-            onValueChange={(text) =>
-              setNewMoment((currentmoment) => ({
-                ...currentmoment,
-                activity: text,
-              }))
-            }
-          >
-            {activities.map((activity) => (
-              <Select.Item
-                label={activity.name}
-                value={activity.name}
-                key={activity.id}
-              />
-            ))}
-          </Select>
-        </Modal.Body>
-        <Modal.Footer>
-          <Button.Group space={2}>
-            <Button
-              variant="ghost"
-              colorScheme="blueGray"
-              onPress={() => {
-                setAddMoment(false);
-              }}
-            >
-              cancelar
-            </Button>
-            <Button
-              onPress={() => {
-                saveMoment();
-                setAddMoment(false);
-              }}
-            >
-              guardar
-            </Button>
-          </Button.Group>
-        </Modal.Footer>
-      </Modal.Content>
-    </Modal>
-  );
-
-  const ModalCommentModal = () => (
-    <>
-      <Modal isOpen={commnetMoment} onClose={setCommentMoment} size="lg">
-        <Modal.Content>
-          <Modal.CloseButton />
-          <Modal.Header>Agregar un momento</Modal.Header>
-          <Modal.Body>
-            <Text>Agrega un comentario de tu experiencia</Text>
-            <TextArea autoCompleteType={false}></TextArea>
-            <Radio.Group
-              name="myRadioGroup"
-              accessibilityLabel="favorite number"
-              onChange={(nextValue) => {
-                console.log(nextValue);
-              }}
-            >
-              <Radio value="0" my={1}>
-                0
-              </Radio>
-              <Radio value="1" my={1}>
-                1
-              </Radio>
-              <Radio value="2" my={1}>
-                2
-              </Radio>
-              <Radio value="3" my={1}>
-                3
-              </Radio>
-              <Radio value="4" my={1}>
-                4
-              </Radio>
-            </Radio.Group>
-          </Modal.Body>
-          <Modal.Footer>
-            <Button.Group space={2}>
-              <Button
-                variant="ghost"
-                colorScheme="blueGray"
-                onPress={() => {
-                  setCommentMoment(false);
-                }}
-              >
-                cancelar
-              </Button>
-              <Button
-                onPress={() => {
-                  setCommentMoment(false);
-                }}
-              >
-                guardar
-              </Button>
-            </Button.Group>
-          </Modal.Footer>
-        </Modal.Content>{" "}
-      </Modal>
-    </>
-  );
+  const optionsMap = [
+    {
+      label: "IR",
+      callback: (marker: any) => {
+        openMap({
+          latitude: Number(marker.location[0]),
+          longitude: Number(marker.location[1]),
+          label: marker.name,
+        });
+      },
+    },
+    {
+      label: "Comentar",
+      callback: ({ id }: { id: string }) => {
+        setNewComment(() => ({ id, rate: 4 }));
+        setCommentMoment(true);
+      },
+    },
+  ];
 
   return (
     <>
-      <ModalAddMoment />
-      <ModalCommentModal/>
+      <ModalAddMoment
+        {...{
+          addMoment,
+          setAddMoment,
+          activities,
+          momentList,
+          newMoment,
+          setNewMoment,
+        }}
+      />
+      <ModalCommentModal
+        {...{ newComment, setNewComment, commnetMoment, setCommentMoment }}
+      />
       {location ? (
-        <MapView
-          style={styles.map}
-          initialRegion={transformLocation()}
-          zoomControlEnabled={true}
-          showsMyLocationButton={true}
-          showsUserLocation={true}
-        >
-          {markers.map((marker: any) => {
-            if (
-              marker &&
-              marker.location &&
-              marker.location[0] !== location.coords.latitude &&
-              marker.location[1] !== location.coords.longitude
-            ) {
-              return (
-                <Marker
-                  key={marker.id}
-                  coordinate={{
-                    latitude: marker.location[0],
-                    longitude: marker.location[1],
-                  }}
-                  title={marker.name}
-                >
-                  <Callout>
-                    <View
-                      style={{
-                        height: 70,
-                        width: 250,
-                        flexDirection: "row",
-                        marginBottom: 10,
-                      }}
-                    >
-                      <Button
-                        borderRadius="0"
-                        w="50%"
-                        borderColor="white"
-                        borderWidth={1}
-                        onPress={() => {
-                          openMap({
-                            latitude: marker.location[0].toString(),
-                            longitude: marker.location[1].toString(),
-                            label: marker.name,
-                          });
-                        }}
-                      >
-                        Ir
-                      </Button>
-                      <Button
-                        borderRadius="0"
-                        w="50%"
-                        borderColor="white"
-                        borderWidth={1}
-                        onPress={()=>{
-                            setCommentMoment(true)
-                        }}
-                      >
-                        Comentar
-                      </Button>
-                    </View>
-                  </Callout>
-                </Marker>
-              );
-            }
-          })}
+        <>
+          <MapView
+            style={styles.map}
+            initialRegion={transformLocation()}
+            zoomControlEnabled={true}
+            showsMyLocationButton={true}
+            showsUserLocation={true}
+          >
+            {markers.map((marker: any) => {
+              if (
+                marker &&
+                marker.location &&
+                marker.location[0] !== location.coords.latitude &&
+                marker.location[1] !== location.coords.longitude
+              ) {
+                return (
+                  <Marker
+                    key={marker.id}
+                    coordinate={{
+                      latitude: Number(marker.location[0]),
+                      longitude: Number(marker.location[1]),
+                    }}
+                    onPress={() => {
+                      setMarkerSelected(marker);
+                    }}
+                  ></Marker>
+                );
+              }
+            })}
 
-          <Marker
-            coordinate={{
-              latitude: location.coords.latitude,
-              longitude: location.coords.longitude,
-            }}
-            title={"tu estas Aquí"}
-            pinColor={"purple"}
-            onPress={() =>
-              addMomentModal([
-                location.coords.latitude,
-                location.coords.longitude,
-              ])
-            }
-          />
-        </MapView>
+            <Marker
+              coordinate={{
+                latitude: Number(location.coords.latitude),
+                longitude: Number(location.coords.longitude),
+              }}
+              pinColor={"purple"}
+              onPress={() =>
+                addMomentModal([
+                  location.coords.latitude,
+                  location.coords.longitude,
+                ])
+              }
+            />
+          </MapView>
+          {markerSelected && (
+            <View
+              style={{ position: "absolute", bottom: 0 }}
+              w="100%"
+              h="150"
+              backgroundColor="blueGray.200"
+            >
+              <Text
+                textAlign="center"
+                fontSize="lg"
+                style={{ marginTop: 25, marginBottom: 20 }}
+              >
+                {markerSelected.name}
+              </Text>
+              <Text
+                position="absolute"
+                right="0"
+                fontSize="lg"
+                padding={5}
+                onPress={() => setMarkerSelected(null)}
+              >
+                X
+              </Text>
+              <View flex="0.7" flexDirection="row" opacity="0.8">
+                {optionsMap.map((item, index) => {
+                  return (
+                    <Button
+                      key={index}
+                      flex="0.5"
+                      onPress={() => item.callback(markerSelected)}
+                      borderColor="white"
+                      borderWidth={1}
+                      borderRadius="0"
+                    >
+                      {item.label}
+                    </Button>
+                  );
+                })}
+              </View>
+            </View>
+          )}
+        </>
       ) : (
         <>{errorMsg && <AlertComponent status="error" text={errorMsg} />}</>
       )}
@@ -355,3 +289,176 @@ interface newCoords extends LocationObjectCoords {
   latitudeDelta: number;
   longitudeDelta: number;
 }
+
+const ModalAddMoment = ({
+  addMoment,
+  setAddMoment,
+  activities,
+  momentList,
+  newMoment,
+  setNewMoment,
+}: any) => {
+  const [loading, setLoading] = useState(false);
+  const saveMoment = async () => {
+    setLoading(true);
+    await addMomentRest(newMoment);
+    setLoading(false);
+    setAddMoment(false);
+    momentList();
+  };
+  return (
+    <Modal isOpen={addMoment} onClose={setAddMoment} size="lg">
+      <Modal.Content>
+        <Modal.CloseButton />
+        <Modal.Header>Agregar un momento</Modal.Header>
+        <Modal.Body>
+          <Text marginBottom={5}>
+            Agrega este momento, recurda que el nombre que le ingreses será el
+            que todos los usuarios vean
+          </Text>
+          <Input
+            marginBottom={5}
+            placeholder="Nombre del momento"
+            onChangeText={(text) =>
+              setNewMoment((currentmoment: any) => ({
+                ...currentmoment,
+                name: text,
+              }))
+            }
+          />
+          <Select
+            accessibilityLabel="Seleccione Actividad"
+            placeholder="Seleccione Actividad"
+            onValueChange={(text) =>
+              setNewMoment((currentmoment: any) => ({
+                ...currentmoment,
+                activity: text,
+              }))
+            }
+          >
+            {activities.map((activity: any) => (
+              <Select.Item
+                label={`${activity.name} - ${activity.description}`}
+                value={activity.name}
+                key={activity.id}
+              />
+            ))}
+          </Select>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button.Group space={2}>
+            <Button
+              variant="ghost"
+              colorScheme="blueGray"
+              onPress={() => {
+                setAddMoment(false);
+              }}
+            >
+              cancelar
+            </Button>
+            <Button
+              isLoading={loading}
+              onPress={async () => {
+                saveMoment();
+              }}
+            >
+              guardar
+            </Button>
+          </Button.Group>
+        </Modal.Footer>
+      </Modal.Content>
+    </Modal>
+  );
+};
+
+const ModalCommentModal = ({
+  newComment,
+  commnetMoment,
+  setNewComment,
+  setCommentMoment,
+}: any) => {
+  const [loading, setLoading] = useState(false);
+  const saveComment = async () => {
+    if (newComment && Object.values(newComment).length === 3) {
+      setLoading(true);
+      const id = newComment.id;
+      delete newComment.id;
+      await commentMomentRest(id, {
+        ...newComment,
+        rate: Number(newComment.rate),
+      });
+      setCommentMoment(false);
+      setNewComment({});
+      setLoading(false);
+    } else {
+      alert("llene todos los campos");
+    }
+  };
+
+  return (
+    <>
+      <Modal isOpen={commnetMoment} onClose={setCommentMoment} size="lg">
+        <Modal.Content>
+          <Modal.CloseButton />
+          <Modal.Header>Agregar un momento</Modal.Header>
+          <Modal.Body>
+            <Text>Agrega un comentario de tu experiencia</Text>
+            <TextArea
+              autoCompleteType="off"
+              mb={10}
+              mt={5}
+              onChangeText={(comment) => {
+                setNewComment((current: any) => ({ ...current, comment }));
+              }}
+            ></TextArea>
+            <Radio.Group
+              name="myRadioGroup"
+              accessibilityLabel="favorite number"
+              onChange={(rate) => {
+                setNewComment((current: any) => ({ ...current, rate }));
+              }}
+              defaultValue="4"
+            >
+              <Radio value="0" my={1}>
+                El Lugar no existe
+              </Radio>
+              <Radio value="1" my={1}>
+                No cumplio con mis espectativas
+              </Radio>
+              <Radio value="2" my={1}>
+                Aceptaban a mi mascota, pero no la actividad que referenciaba
+              </Radio>
+              <Radio value="3" my={1}>
+                pude hacer la actividad, pero no me sentí satisfecho
+              </Radio>
+              <Radio value="4" my={1}>
+                Cumple con todas las espectativas
+              </Radio>
+            </Radio.Group>
+          </Modal.Body>
+          <Modal.Footer>
+            <Button.Group space={2}>
+              <Button
+                variant="ghost"
+                colorScheme="blueGray"
+                onPress={() => {
+                  setCommentMoment(false);
+                }}
+              >
+                cancelar
+              </Button>
+              <Button
+                isLoading={loading}
+                onPress={() => {
+                  saveComment();
+                }}
+              >
+                guardar
+              </Button>
+            </Button.Group>
+          </Modal.Footer>
+        </Modal.Content>{" "}
+      </Modal>
+    </>
+  );
+};

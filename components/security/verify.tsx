@@ -1,16 +1,17 @@
 import { Input, Box, Button, Text } from "native-base";
 import { useEffect, useState } from "react";
-import { SafeAreaView } from "react-native";
+import { Alert, SafeAreaView } from "react-native";
 
 import { verify } from "../../services/security";
 
 const Verify = ({ navigation, route }: any) => {
   const [data, setData] = useState<{ code: string }>({ code: "" });
+  const [loading,setLoading] = useState(false)
 
   const sendForm = async () => {
     try {
-      console.warn({ ...data, email: route.params.data.email });
-      if (!data.code) {
+      setLoading(true)
+      if (data.code) {
         await verify({ ...data, email: route.params.data.email });
         navigation.navigate("Login", {
           message: {
@@ -18,9 +19,12 @@ const Verify = ({ navigation, route }: any) => {
             status: "success",
           },
         });
-      } else console.warn("code no agregado");
+      } else Alert.alert("Error Código", "El campo del código esta vacío")
     } catch (error) {
       console.error(error);
+      Alert.alert("Error encontrado","Verifique el codigo e intente nuevamente")
+    }finally{
+      setLoading(false);
     }
   };
 
@@ -50,7 +54,13 @@ const Verify = ({ navigation, route }: any) => {
               setData((current) => ({ ...current, code }))
             }
           />
-          <Button onPress={sendForm} maxWidth="300px" mx="3" margin={3}>
+          <Button
+            isLoading={loading}
+            onPress={sendForm}
+            maxWidth="300px"
+            mx="3"
+            margin={3}
+          >
             Confirmar
           </Button>
         </SafeAreaView>
